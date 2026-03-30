@@ -18,34 +18,33 @@ from app.models import ChatMessage, DispatchLog, RescueRequest, User, Volunteer 
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
-
-
-def build_cors_origins() -> list[str]:
-    origins: list[str] = []
-    seen: set[str] = set()
-
-    for origin in [*settings.cors_origins, "http://localhost:5173", "http://127.0.0.1:5173"]:
-        normalized_origin = origin.strip().rstrip("/")
-        if normalized_origin and normalized_origin not in seen:
-            origins.append(normalized_origin)
-            seen.add(normalized_origin)
-
-    return origins
-
-
 app = FastAPI(
     title=settings.app_name,
     version="1.0.0",
 )
 
+origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://volunteer-dispatch-optimizer.vercel.app",
+    "https://volunteer-dispatch-optimizer-2bu7fet0j.vercel.app",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=build_cors_origins(),
-    allow_origin_regex=settings.cors_origin_regex or None,
+    allow_origins=origins,
+    allow_origin_regex="https://.*vercel.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    print("Incoming:", request.method, request.url)
+    response = await call_next(request)
+    return response
 
 
 @app.exception_handler(SQLAlchemyError)
