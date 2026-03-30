@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from "react-router-dom";
 
+import { API_BASE_URL } from "../api/client";
 import { useAuth } from "../hooks/useAuth";
 import { VolunteerAlertCenter } from "./VolunteerAlertCenter";
 
@@ -43,7 +44,7 @@ export function Layout() {
                 {description}
                 {!isVolunteer ? (
                   <>
-                    <span className="mx-1 font-medium text-white">http://127.0.0.1:8000</span>
+                    <span className="mx-1 font-medium text-white">{API_BASE_URL}</span>
                     with JWT-protected Axios requests and live operational views.
                   </>
                 ) : null}

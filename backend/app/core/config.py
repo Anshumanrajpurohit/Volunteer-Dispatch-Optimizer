@@ -1,4 +1,5 @@
-﻿from functools import lru_cache
+import json
+from functools import lru_cache
 from pathlib import Path
 
 from pydantic import Field, field_validator
@@ -31,8 +32,12 @@ class Settings(BaseSettings):
     )
 
     cors_origins: list[str] = Field(
-        default=["http://localhost:3000", "http://localhost:5173"],
+        default=["http://localhost:5173", "http://127.0.0.1:5173"],
         validation_alias="CORS_ORIGINS",
+    )
+    cors_origin_regex: str = Field(
+        default=r"^https://.*\.vercel\.app$",
+        validation_alias="CORS_ORIGIN_REGEX",
     )
 
     openai_api_key: str | None = Field(default=None, validation_alias="OPENAI_API_KEY")
@@ -47,6 +52,17 @@ class Settings(BaseSettings):
             return value
         if not value:
             return []
+
+        value = value.strip()
+
+        if value.startswith("["):
+            try:
+                parsed_value = json.loads(value)
+            except json.JSONDecodeError:
+                parsed_value = None
+            if isinstance(parsed_value, list):
+                return [str(origin).strip() for origin in parsed_value if str(origin).strip()]
+
         return [origin.strip() for origin in value.split(",") if origin.strip()]
 
 
