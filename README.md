@@ -22,6 +22,12 @@ The current implementation matters because it connects the full coordination loo
 
 ## Key Features
 
+### Roles
+
+Admin — everything a coordinator can do, plus user listing
+Coordinator — intake, volunteer management, ranking, dispatch, logs, chat, AI assist
+Volunteer — assigned rescues only, response actions, rescue chat
+
 ### Authentication & Roles
 
 - JWT-based authentication through `POST /auth/login`
@@ -189,85 +195,7 @@ These files reference older helper patterns and are not wired into the current a
 
 A seed script is also present at `backend/app/seed/seed_data.py`, but it currently imports enum names that are not defined in `backend/app/models/enums.py`, so it should be reviewed before relying on it as the default setup path.
 
-## Project Structure
 
-```text
-.
-|- backend/
-|  |- app/
-|  |  |- api/
-|  |  |  |- routes/
-|  |  |  |  |- ai.py
-|  |  |  |  |- auth.py
-|  |  |  |  |- chat.py
-|  |  |  |  |- dispatch_logs.py
-|  |  |  |  |- matching.py
-|  |  |  |  |- message_draft.py
-|  |  |  |  |- rescue_requests.py
-|  |  |  |  |- users.py
-|  |  |  |  |- volunteer.py
-|  |  |  |  '- volunteers.py
-|  |  |  '- serializers.py
-|  |  |- core/
-|  |  |  |- config.py
-|  |  |  |- database.py
-|  |  |  |- db_utils.py
-|  |  |  '- security.py
-|  |  |- db/
-|  |  |  |- base.py
-|  |  |  '- session.py
-|  |  |- models/
-|  |  |  |- chat_message.py
-|  |  |  |- dispatch_log.py
-|  |  |  |- enums.py
-|  |  |  |- rescue_request.py
-|  |  |  |- user.py
-|  |  |  '- volunteer.py
-|  |  |- schemas/
-|  |  |- services/
-|  |  |- seed/
-|  |  |  '- seed_data.py
-|  |  '- main.py
-|  |- .env
-|  '- requirements.txt
-|- frontend/
-|  |- package.json
-|  |- vite.config.js
-|  |- tailwind.config.js
-|  |- postcss.config.js
-|  '- src/
-|     |- api/
-|     |  |- client.js
-|     |  '- endpoints.js
-|     |- components/
-|     |  |- AIActionButton.jsx
-|     |  |- ChatPanel.jsx
-|     |  |- Layout.jsx
-|     |  |- ProtectedRoute.jsx
-|     |  '- VolunteerAlertCenter.jsx
-|     |- hooks/
-|     |  |- useAIAssist.jsx
-|     |  '- useAuth.jsx
-|     |- pages/
-|     |  |- ChatPage.jsx
-|     |  |- DashboardPage.jsx
-|     |  |- DispatchLogsPage.jsx
-|     |  |- LoginPage.jsx
-|     |  |- MatchResultsPage.jsx
-|     |  |- RescueDetailPage.jsx
-|     |  |- RescueRequestsPage.jsx
-|     |  |- RoleHomePage.jsx
-|     |  |- VolunteerDashboardPage.jsx
-|     |  |- VolunteerProfilePage.jsx
-|     |  |- VolunteerRescueDetailPage.jsx
-|     |  |- VolunteerRescuesPage.jsx
-|     |  '- VolunteersPage.jsx
-|     |- utils/
-|     |- App.jsx
-|     |- index.css
-|     '- main.jsx
-'- README.md
-```
 
 ## Main Workflows
 
@@ -396,96 +324,6 @@ A seed script is also present at `backend/app/seed/seed_data.py`, but it current
 - `POST /ai/message-assist/{rescue_request_id}/{volunteer_id}`
 - `POST /ai/smart-dispatch/{rescue_request_id}`
 
-## Database Overview
-
-### `app.users`
-
-Stores login identity, email, hashed password, role, and account creation timestamp.
-
-### `app.volunteers`
-
-Stores volunteer profile data used by the optimizer and volunteer panel, including:
-
-- name and contact information
-- location coordinates
-- skills
-- availability window
-- dispatch totals and successful responses
-- active/inactive status
-
-### `app.rescue_requests`
-
-Stores rescue intake records, including:
-
-- location and coordinates
-- animal type
-- urgency
-- required skills
-- notes
-- rescue status
-- timestamps
-
-### `app.dispatch_logs`
-
-Stores assignment and response history for rescue requests, including:
-
-- rescue request reference
-- volunteer reference
-- dispatch/response status
-- message snapshot
-- notes
-- timestamp
-
-### `app.chat_messages`
-
-Stores rescue-linked chat messages for the active volunteer assignment, including:
-
-- rescue request reference
-- volunteer reference
-- sender type (`coordinator` or `volunteer`)
-- message text
-- timestamp
-
-## UI / Frontend Pages
-
-### Active Routed Pages
-
-- `LoginPage`: JWT login entry point
-- `RoleHomePage`: routes users to coordinator/admin dashboard or volunteer dashboard
-- `DashboardPage`: coordinator/admin operational overview
-- `RescueRequestsPage`: rescue intake plus queue list and AI-assisted intake
-- `RescueDetailPage`: rescue summary, status update, dispatch history, and embedded chat
-- `MatchResultsPage`: ranking, draft generation, AI assist, and dispatch confirmation
-- `VolunteersPage`: volunteer CRUD management
-- `DispatchLogsPage`: filtered dispatch history
-- `ChatPage`: role-aware rescue chat thread list and conversation view
-- `VolunteerDashboardPage`: volunteer summary, alerts, and assigned rescues
-- `VolunteerRescuesPage`: volunteer-only assigned rescue list
-- `VolunteerRescueDetailPage`: volunteer rescue details, response actions, and chat
-- `VolunteerProfilePage`: linked volunteer/user profile view
-
-### Present in Repository but Not Active in the Current Router
-
-- `RescueRequestFormPage`
-- `VolunteerManagementPage`
-
-## Current Strengths
-
-- The core coordination loop is implemented end to end rather than as isolated screens.
-- The optimizer is deterministic and explainable, with visible score components in the UI.
-- Manual coordinator control remains intact even when AI assist is available.
-- Role-based access is enforced on the backend, not only in the frontend.
-- Chat is assignment-scoped, which keeps communication tied to operational context.
-- The volunteer panel is intentionally narrower than the coordinator console, which makes access boundaries clear.
-
-## Future Improvements
-
-- add database migrations instead of relying on manual schema creation
-- add automated backend and frontend tests
-- replace polling-based chat/alerts with WebSockets or server-sent events
-- add a dedicated admin UI for user management and role administration
-- clean up or remove legacy/inactive files that are still present in the repository
-- align and validate the sample seed script so demo data setup is a supported path
 
 ## Local Setup Instructions
 
@@ -535,24 +373,6 @@ Practical notes based on the current code:
 - the models use PostgreSQL array columns, so PostgreSQL is the practical target database
 - AI is optional; if `OPENAI_API_KEY` is omitted, the AI service falls back where implemented
 
-### 3. Database Setup
-
-Create the schema first:
-
-```sql
-CREATE SCHEMA IF NOT EXISTS app;
-```
-
-Then create tables from the SQLAlchemy metadata:
-
-```bash
-cd backend
-venv\Scripts\python.exe -c "from app.core.database import Base, engine; Base.metadata.create_all(bind=engine)"
-```
-
-### 4. Seed Data Note
-
-A seed script exists at `backend/app/seed/seed_data.py`, but it currently imports enum names that are not defined in `backend/app/models/enums.py`. Because of that, it should be reviewed before being used as the default setup step.
 
 ### 5. Frontend Setup
 
