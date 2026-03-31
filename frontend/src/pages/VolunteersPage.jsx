@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+ï»¿import { useEffect, useState } from "react";
 
 import {
   createVolunteer,
@@ -9,9 +9,9 @@ import {
 import { ErrorAlert } from "../components/ErrorAlert";
 import { FormField } from "../components/FormField";
 import { SectionCard } from "../components/SectionCard";
-import { StatusBadge } from "../components/StatusBadge";
+import { SkillTags, StatusBadge } from "../components/StatusBadge";
 import { useAuth } from "../hooks/useAuth";
-import { formatDateTime, formatSkills, formatTimeValue } from "../utils/format";
+import { formatDateTime, formatTimeValue } from "../utils/format";
 
 function emptyVolunteerForm() {
   return {
@@ -34,6 +34,15 @@ function parseList(value) {
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function getInitials(name) {
+  return String(name || "VL")
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("");
 }
 
 export function VolunteersPage() {
@@ -178,32 +187,32 @@ export function VolunteersPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+    <div className="page-shell page-active">
+      <div className="page-header">
         <div>
-          <p className="page-eyebrow">People</p>
-          <h1 className="mt-2 text-3xl font-semibold text-slate-950">Volunteers</h1>
-          <p className="mt-2 max-w-3xl text-sm text-slate-600">
-            Manage volunteer coverage, skills, location, and dispatch history with exact
-            POST and PUT payloads that match the backend schema.
+          <div className="page-kicker">People</div>
+          <h1 className="page-title">Volunteers</h1>
+          <p className="page-description">
+            Manage volunteer coverage, skills, location, and dispatch history with exact POST and PUT payloads that match the backend schema.
           </p>
         </div>
-        <div className="flex gap-3">
-          <button className="secondary-button" onClick={() => loadVolunteers()} type="button">
-            Refresh list
+        <div className="page-toolbar">
+          <button className="btn-outline" onClick={() => loadVolunteers()} type="button">
+            Refresh List
           </button>
-          <button className="secondary-button" onClick={resetForm} type="button">
-            New volunteer
+          <button className="btn-primary" onClick={resetForm} type="button">
+            New Volunteer
           </button>
         </div>
       </div>
 
       <ErrorAlert message={pageError} />
 
-      <div className="grid gap-6 xl:grid-cols-[1.05fr,0.95fr]">
+      <div className="grid gap-6 xl:grid-cols-2">
         <SectionCard
           description="The form supports create and update with the same exact field names returned by the API."
           title={isEditing ? `Edit volunteer #${selectedVolunteerId}` : "Create volunteer"}
+          titleTag={isEditing ? "edit mode" : "new record"}
         >
           <form className="grid gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
             <FormField
@@ -226,7 +235,7 @@ export function VolunteersPage() {
               type="email"
               value={form.email}
             />
-            <div className="md:col-span-2 grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 md:col-span-2 md:grid-cols-2">
               <FormField
                 label="Latitude"
                 name="latitude"
@@ -298,68 +307,76 @@ export function VolunteersPage() {
             <div className="md:col-span-2 space-y-3">
               <ErrorAlert message={formError} />
               <div className="flex flex-wrap gap-3">
-                <button className="primary-button" disabled={!canManage || saving} type="submit">
-                  {saving ? "Saving..." : isEditing ? "Update volunteer" : "Create volunteer"}
+                <button className="btn-primary" disabled={!canManage || saving} type="submit">
+                  {saving ? "Saving..." : isEditing ? "Update Volunteer" : "Create Volunteer"}
                 </button>
                 {isEditing ? (
-                  <button className="secondary-button" onClick={resetForm} type="button">
-                    Cancel edit
+                  <button className="btn-outline" onClick={resetForm} type="button">
+                    Cancel Edit
                   </button>
                 ) : null}
-                {!canManage ? (
-                  <span className="inline-flex items-center rounded-full bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700">
-                    Read-only: your role cannot change volunteer records.
-                  </span>
-                ) : null}
+                {!canManage ? <div className="notice notice-ai">Read-only: your role cannot change volunteer records.</div> : null}
               </div>
             </div>
           </form>
         </SectionCard>
 
-        <SectionCard description="Latest data from GET /volunteers." title="Volunteer directory">
+        <SectionCard description="Latest data from GET /volunteers." title="Volunteer directory" titleTag="ops roster">
           {loading ? (
-            <div className="py-8 text-center text-sm text-slate-500">Loading volunteers...</div>
+            <div className="loading-wrap">
+              <div className="loading-state">
+                <span className="pulse-dot" />
+                <span>Loading volunteers...</span>
+              </div>
+            </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-left text-sm">
-                <thead className="border-b border-slate-200 text-slate-500">
+            <div className="table-wrapper">
+              <table>
+                <thead>
                   <tr>
-                    <th className="px-3 py-3 font-medium">Name</th>
-                    <th className="px-3 py-3 font-medium">Skills</th>
-                    <th className="px-3 py-3 font-medium">Availability</th>
-                    <th className="px-3 py-3 font-medium">Dispatches</th>
-                    <th className="px-3 py-3 font-medium">Status</th>
-                    <th className="px-3 py-3 font-medium">Updated</th>
-                    <th className="px-3 py-3 font-medium">Actions</th>
+                    <th>Name</th>
+                    <th>Skills</th>
+                    <th>Availability</th>
+                    <th>Dispatches</th>
+                    <th>Status</th>
+                    <th>Updated</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {volunteers.map((volunteer) => (
-                    <tr className="border-b border-slate-100" key={volunteer.id}>
-                      <td className="px-3 py-4">
-                        <div className="font-medium text-slate-950">{volunteer.name}</div>
-                        <div className="text-xs text-slate-500">
-                          #{volunteer.id} • {volunteer.email || volunteer.phone || "No direct contact"}
+                    <tr key={volunteer.id}>
+                      <td>
+                        <div className="person-pill">
+                          <div className="avatar-circle">
+                            <span className="avatar-initials">{getInitials(volunteer.name)}</span>
+                          </div>
+                          <div>
+                            <div className="td-primary">{volunteer.name}</div>
+                            <div className="table-meta">#{volunteer.id} / {volunteer.email || volunteer.phone || "No direct contact"}</div>
+                          </div>
                         </div>
                       </td>
-                      <td className="px-3 py-4 text-slate-600">{formatSkills(volunteer.skills)}</td>
-                      <td className="px-3 py-4 text-slate-600">
+                      <td>
+                        <SkillTags skills={volunteer.skills} />
+                      </td>
+                      <td>
                         {formatTimeValue(volunteer.availability_start)} - {formatTimeValue(volunteer.availability_end)}
                       </td>
-                      <td className="px-3 py-4 text-slate-600">
+                      <td>
                         {volunteer.successful_responses ?? 0}/{volunteer.total_dispatches ?? 0}
                       </td>
-                      <td className="px-3 py-4">
+                      <td>
                         <StatusBadge status={volunteer.active_status ? "active" : "inactive"} />
                       </td>
-                      <td className="px-3 py-4 text-slate-600">{formatDateTime(volunteer.updated_at)}</td>
-                      <td className="px-3 py-4">
-                        <div className="flex flex-wrap gap-2">
-                          <button className="secondary-button px-3 py-2 text-xs" onClick={() => selectVolunteer(volunteer)} type="button">
+                      <td>{formatDateTime(volunteer.updated_at)}</td>
+                      <td>
+                        <div className="table-actions">
+                          <button className="btn-outline" onClick={() => selectVolunteer(volunteer)} type="button">
                             Edit
                           </button>
                           <button
-                            className="danger-button px-3 py-2 text-xs"
+                            className="btn-danger"
                             disabled={!canManage || deletingId === volunteer.id}
                             onClick={() => handleDelete(volunteer.id)}
                             type="button"
@@ -372,8 +389,8 @@ export function VolunteersPage() {
                   ))}
                   {!volunteers.length ? (
                     <tr>
-                      <td className="px-3 py-10 text-center text-slate-500" colSpan="7">
-                        No volunteers found.
+                      <td className="text-center" colSpan="7">
+                        <div className="empty-state">No volunteers found.</div>
                       </td>
                     </tr>
                   ) : null}

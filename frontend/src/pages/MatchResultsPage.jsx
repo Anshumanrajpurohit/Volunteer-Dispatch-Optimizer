@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+ï»¿import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import {
@@ -12,9 +12,8 @@ import { ErrorAlert } from "../components/ErrorAlert";
 import { FormField } from "../components/FormField";
 import { LoadingState } from "../components/LoadingState";
 import { SectionCard } from "../components/SectionCard";
-import { StatusBadge } from "../components/StatusBadge";
+import { SkillTags, StatusBadge, UrgencyChip } from "../components/StatusBadge";
 import { useAIAssist } from "../hooks/useAIAssist";
-import { formatSkills } from "../utils/format";
 
 function getAiFieldProps(aiFilledFields, fieldName) {
   if (!aiFilledFields.includes(fieldName)) {
@@ -23,9 +22,9 @@ function getAiFieldProps(aiFilledFields, fieldName) {
 
   return {
     hint: "AI-filled suggestion applied.",
-    inputClassName: "border-amber-300 bg-amber-50/70 focus:border-amber-400 focus:ring-amber-100",
-    labelClassName: "text-amber-900",
-    hintClassName: "text-amber-700",
+    inputClassName: "ai-filled-field",
+    labelClassName: "ai-filled-label",
+    hintClassName: "ai-filled-hint",
   };
 }
 
@@ -315,142 +314,125 @@ export function MatchResultsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+    <div className="page-shell page-active">
+      <div className="page-header">
         <div>
-          <p className="page-eyebrow">Optimizer</p>
-          <h1 className="mt-2 text-3xl font-semibold text-slate-950">Volunteer recommendations</h1>
-          <p className="mt-2 max-w-3xl text-sm text-slate-600">
-            Ranked shortlist for rescue #{rescue.id}. Scores combine distance, skill match, availability,
-            and response rate using the live optimizer weights.
+          <div className="page-kicker">Optimizer</div>
+          <h1 className="page-title">Volunteer recommendations</h1>
+          <p className="page-description">
+            Ranked shortlist for rescue #{rescue.id}. Scores combine distance, skill match, availability, and response rate using the live optimizer weights.
           </p>
         </div>
-        <div className="flex flex-wrap gap-3">
+        <div className="page-toolbar">
           <AIActionButton
             label="AI Assist"
             loading={recommendAssist.loading || smartDispatchAssist.loading}
             onSelect={handlePageAssist}
           />
-          <Link className="secondary-button" to={`/rescue-requests/${rescue.id}`}>
-            Rescue detail
+          <Link className="btn-outline" to={`/rescue-requests/${rescue.id}`}>
+            Rescue Detail
           </Link>
-          <Link className="secondary-button" to="/rescue-requests">
-            Back to queue
+          <Link className="btn-outline" to="/rescue-requests">
+            Back to Queue
           </Link>
         </div>
       </div>
 
-      <SectionCard description="Current rescue context used for ranking." title={`Rescue #${rescue.id}`}>
+      <SectionCard description="Current rescue context used for ranking." title={`Rescue #${rescue.id}`} titleTag="optimizer input">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-3xl border border-slate-200 bg-slate-50/70 p-4">
-            <div className="text-xs uppercase tracking-[0.2em] text-slate-500">Location</div>
-            <div className="mt-2 font-semibold text-slate-950">{rescue.location}</div>
+          <div className="mini-metric">
+            <div className="mini-metric-label">Location</div>
+            <div className="mini-metric-value">{rescue.location}</div>
           </div>
-          <div className="rounded-3xl border border-slate-200 bg-slate-50/70 p-4">
-            <div className="text-xs uppercase tracking-[0.2em] text-slate-500">Animal</div>
-            <div className="mt-2 font-semibold text-slate-950">{rescue.animal_type || "Not specified"}</div>
+          <div className="mini-metric">
+            <div className="mini-metric-label">Animal</div>
+            <div className="mini-metric-value">{rescue.animal_type || "Not specified"}</div>
           </div>
-          <div className="rounded-3xl border border-slate-200 bg-slate-50/70 p-4">
-            <div className="text-xs uppercase tracking-[0.2em] text-slate-500">Urgency</div>
-            <div className="mt-2 font-semibold text-slate-950">{rescue.urgency || "n/a"}</div>
+          <div className="mini-metric">
+            <div className="mini-metric-label">Urgency</div>
+            <div className="mt-2">
+              <UrgencyChip value={rescue.urgency || "N/A"} />
+            </div>
           </div>
-          <div className="rounded-3xl border border-slate-200 bg-slate-50/70 p-4">
-            <div className="text-xs uppercase tracking-[0.2em] text-slate-500">Status</div>
-            <div className="mt-2"><StatusBadge status={rescue.status} /></div>
+          <div className="mini-metric">
+            <div className="mini-metric-label">Status</div>
+            <div className="mt-2">
+              <StatusBadge status={rescue.status} />
+            </div>
           </div>
         </div>
-        <div className="mt-4 text-sm text-slate-600">Required skills: {formatSkills(rescue.required_skills)}</div>
-        <div className="mt-2 text-sm text-slate-600">Notes: {rescue.notes || "No notes provided."}</div>
+        <div className="mt-4">
+          <SkillTags skills={rescue.required_skills} />
+        </div>
+        <div className="mini-metric-text">{rescue.notes || "No notes provided."}</div>
       </SectionCard>
 
-      {aiNotice ? (
-        <div className="rounded-3xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-          {aiNotice}
-        </div>
-      ) : null}
+      {aiNotice ? <div className="notice notice-success">{aiNotice}</div> : null}
       <ErrorAlert message={error || recommendAssist.error || messageAssist.error || smartDispatchAssist.error} />
 
       <div className="grid gap-6 xl:grid-cols-[1.45fr,0.95fr]">
-        <SectionCard description="Top matches are sorted by final optimizer score." title="Ranked shortlist">
+        <SectionCard description="Top matches are sorted by final optimizer score." title="Ranked shortlist" titleTag="ranked">
           <div className="space-y-4">
             {matches.map((match, index) => {
               const isRecommended = match.volunteer_id === recommendedVolunteerId;
               const isSelected = match.volunteer_id === selectedVolunteerId;
               const isAiSelected = match.volunteer_id === aiSelectedVolunteerId;
+              const cardClassName = [
+                "selection-card",
+                isAiSelected ? "ai" : "",
+                isRecommended && !isAiSelected ? "highlight" : "",
+              ]
+                .filter(Boolean)
+                .join(" ");
 
               return (
-                <article
-                  className={`rounded-3xl border p-5 ${
-                    isAiSelected
-                      ? "border-cyan-300 bg-cyan-50/70 shadow-[0_18px_50px_rgba(8,145,178,0.10)]"
-                      : isRecommended
-                        ? "border-amber-300 bg-amber-50/60 shadow-[0_18px_50px_rgba(245,158,11,0.08)]"
-                        : "border-slate-200 bg-white"
-                  }`}
-                  key={match.volunteer_id}
-                >
+                <article className={cardClassName} key={match.volunteer_id}>
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div>
-                      <div className="flex flex-wrap items-center gap-3">
-                        <span className="rounded-full bg-cyan-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-700">
-                          Rank {index + 1}
-                        </span>
-                        {isRecommended ? (
-                          <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-800">
-                            Recommended
-                          </span>
-                        ) : null}
-                        {isAiSelected ? (
-                          <span className="rounded-full bg-cyan-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-800">
-                            AI prepared
-                          </span>
-                        ) : null}
-                        {isSelected ? (
-                          <span className="rounded-full bg-slate-950 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-white">
-                            Selected
-                          </span>
-                        ) : null}
-                        <span className="text-lg font-semibold text-slate-950">{match.volunteer_name}</span>
+                      <div className="flag-list">
+                        <span className="flag-pill">Rank {index + 1}</span>
+                        {isRecommended ? <span className="flag-pill recommended">Recommended</span> : null}
+                        {isAiSelected ? <span className="flag-pill ai">AI Prepared</span> : null}
+                        {isSelected ? <span className="flag-pill selected">Selected</span> : null}
+                      </div>
+                      <div className="mt-3 flex flex-wrap items-center gap-3">
+                        <span className="text-lg font-semibold text-[var(--text)]">{match.volunteer_name}</span>
                         <StatusBadge status={match.current_availability_status} />
                       </div>
-                      <p className="mt-2 text-sm text-slate-600">{match.phone || "No phone"} • {match.email || "No email"}</p>
-                      <p className="mt-1 text-sm text-slate-600">Matched skills: {formatSkills(match.matched_skills)}</p>
-                      <p className="mt-1 text-sm text-slate-600">
+                      <p className="mt-2 muted-copy">{match.phone || "No phone"} / {match.email || "No email"}</p>
+                      <div className="mt-3">
+                        <SkillTags skills={match.matched_skills} emptyLabel="No matched skills" />
+                      </div>
+                      <p className="mt-3 subdued-copy">
                         Successful responses: {match.successful_responses}/{match.total_dispatches}
                       </p>
                       {isRecommended && recommendationReason ? (
-                        <div className="mt-3 rounded-2xl border border-amber-200 bg-white/80 px-4 py-3 text-sm text-amber-900">
-                          {recommendationReason}
-                        </div>
+                        <div className="notice notice-ai mt-3">{recommendationReason}</div>
                       ) : null}
                     </div>
-                    <div className="rounded-3xl bg-slate-950 px-5 py-4 text-white">
-                      <div className="text-xs uppercase tracking-[0.2em] text-white/65">Final score</div>
-                      <div className="mt-2 text-3xl font-semibold">{match.final_score}</div>
+                    <div className="mini-metric min-w-[132px]">
+                      <div className="mini-metric-label">Final score</div>
+                      <div className="mt-2 text-3xl font-extrabold text-[var(--amber)]">{match.final_score}</div>
                     </div>
                   </div>
-                  <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+                  <div className="score-grid mt-5">
                     <ScoreCell label="Distance" value={`${match.distance_km} km`} subvalue={`${match.distance_score}`} />
                     <ScoreCell label="Skill" value={`${match.skill_score}`} subvalue={`${match.matched_skills.length} skills`} />
                     <ScoreCell label="Availability" value={`${match.availability_score}`} subvalue={match.current_availability_status} />
                     <ScoreCell label="Response" value={`${match.response_rate_score}`} subvalue={`${match.successful_responses}/${match.total_dispatches}`} />
                     <button
-                      className="primary-button h-full"
+                      className="btn-primary h-full"
                       disabled={draftLoading || smartDispatchAssist.loading}
                       onClick={() => handleGenerateDraft(match)}
                       type="button"
                     >
-                      {selectedVolunteerId === match.volunteer_id ? "Draft ready" : "Use recommendation"}
+                      {selectedVolunteerId === match.volunteer_id ? "Draft Ready" : "Use Recommendation"}
                     </button>
                   </div>
                 </article>
               );
             })}
-            {!matches.length ? (
-              <div className="rounded-3xl border border-dashed border-slate-300 px-4 py-12 text-center text-sm text-slate-500">
-                No active volunteers are currently eligible for this rescue request.
-              </div>
-            ) : null}
+            {!matches.length ? <div className="empty-state">No active volunteers are currently eligible for this rescue request.</div> : null}
           </div>
         </SectionCard>
 
@@ -464,7 +446,7 @@ export function MatchResultsPage() {
                 onSelect={handleGenerateAiMessage}
               />
               <button
-                className="secondary-button"
+                className="btn-outline"
                 disabled={!matches.length || smartDispatchAssist.loading}
                 onClick={() => handleSmartDispatch("full_rescue")}
                 type="button"
@@ -475,28 +457,19 @@ export function MatchResultsPage() {
           }
           description="Generate, review, and confirm the dispatch for a selected recommendation."
           title="Dispatch panel"
+          titleTag="confirm"
         >
           {selectedVolunteer ? (
             <form className="space-y-4" onSubmit={handleSubmitDispatch}>
-              <div className={`rounded-3xl border p-4 text-sm text-slate-700 ${aiSelectedVolunteerId === selectedVolunteer.volunteer_id ? "border-cyan-300 bg-cyan-50/70" : "border-slate-200 bg-slate-50/70"}`}>
-                <div className="font-medium text-slate-950">Selected volunteer</div>
-                <div className="mt-1">{selectedVolunteer.volunteer_name}</div>
-                <div className="mt-1 text-slate-500">{selectedVolunteer.phone || "No phone"} • {selectedVolunteer.email || "No email"}</div>
-                <div className="mt-3 flex flex-wrap gap-2">
+              <div className={`selection-card ${aiSelectedVolunteerId === selectedVolunteer.volunteer_id ? "ai" : ""}`}>
+                <div className="font-semibold text-[var(--text)]">Selected volunteer</div>
+                <div className="mt-1 text-base font-semibold text-[var(--text)]">{selectedVolunteer.volunteer_name}</div>
+                <div className="mt-2 muted-copy">{selectedVolunteer.phone || "No phone"} / {selectedVolunteer.email || "No email"}</div>
+                <div className="flag-list mt-3">
                   <StatusBadge status={selectedVolunteer.current_availability_status} />
-                  <span className="inline-flex rounded-full bg-slate-200 px-3 py-1 text-xs font-medium text-slate-700">
-                    Score {selectedVolunteer.final_score}
-                  </span>
-                  {selectedVolunteer.volunteer_id === recommendedVolunteerId ? (
-                    <span className="inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800">
-                      Recommended pick
-                    </span>
-                  ) : null}
-                  {aiSelectedVolunteerId === selectedVolunteer.volunteer_id ? (
-                    <span className="inline-flex rounded-full bg-cyan-100 px-3 py-1 text-xs font-medium text-cyan-800">
-                      AI-selected context
-                    </span>
-                  ) : null}
+                  <span className="flag-pill">Score {selectedVolunteer.final_score}</span>
+                  {selectedVolunteer.volunteer_id === recommendedVolunteerId ? <span className="flag-pill recommended">Recommended Pick</span> : null}
+                  {aiSelectedVolunteerId === selectedVolunteer.volunteer_id ? <span className="flag-pill ai">AI-selected context</span> : null}
                 </div>
               </div>
               <FormField
@@ -541,15 +514,15 @@ export function MatchResultsPage() {
                 type="textarea"
                 value={notes}
               />
-              <button className="primary-button w-full" disabled={submitting} type="submit">
-                {submitting ? "Confirming dispatch..." : "Confirm optimized dispatch"}
+              <button className="btn-primary btn-full" disabled={submitting} type="submit">
+                {submitting ? "Confirming dispatch..." : "Confirm Optimized Dispatch"}
               </button>
             </form>
           ) : (
-            <div className="space-y-4 rounded-3xl border border-dashed border-slate-300 px-4 py-12 text-center text-sm text-slate-500">
+            <div className="space-y-4 empty-state">
               <p>Choose a ranked volunteer to generate a draft and complete the optimizer-driven assignment.</p>
               <button
-                className="secondary-button"
+                className="btn-outline"
                 disabled={!matches.length || smartDispatchAssist.loading}
                 onClick={() => handleSmartDispatch("full_rescue")}
                 type="button"
@@ -566,10 +539,10 @@ export function MatchResultsPage() {
 
 function ScoreCell({ label, value, subvalue }) {
   return (
-    <div className="rounded-2xl bg-slate-50 p-4">
-      <div className="text-xs uppercase tracking-[0.2em] text-slate-500">{label}</div>
-      <div className="mt-2 text-lg font-semibold text-slate-950">{value}</div>
-      <div className="text-sm text-slate-500">{subvalue}</div>
+    <div className="score-cell">
+      <div className="score-label">{label}</div>
+      <div className="score-value">{value}</div>
+      <div className="score-subvalue">{subvalue}</div>
     </div>
   );
 }

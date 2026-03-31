@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+ï»¿import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { createRescueRequest, getRescueRequests } from "../api/endpoints";
@@ -6,10 +6,10 @@ import { AIActionButton } from "../components/AIActionButton";
 import { ErrorAlert } from "../components/ErrorAlert";
 import { FormField } from "../components/FormField";
 import { SectionCard } from "../components/SectionCard";
-import { StatusBadge } from "../components/StatusBadge";
+import { SkillTags, StatusBadge, UrgencyChip } from "../components/StatusBadge";
 import { useAIAssist } from "../hooks/useAIAssist";
 import { useAuth } from "../hooks/useAuth";
-import { formatDateTime, formatSkills, truncateText } from "../utils/format";
+import { formatDateTime, truncateText } from "../utils/format";
 
 function emptyRequestForm() {
   return {
@@ -37,9 +37,9 @@ function getAiFieldProps(aiFilledFields, fieldName, hint) {
 
   return {
     hint: hint ? `${hint} AI-filled suggestion applied.` : "AI-filled suggestion applied.",
-    inputClassName: "border-amber-300 bg-amber-50/70 focus:border-amber-400 focus:ring-amber-100",
-    labelClassName: "text-amber-900",
-    hintClassName: "text-amber-700",
+    inputClassName: "ai-filled-field",
+    labelClassName: "ai-filled-label",
+    hintClassName: "ai-filled-hint",
   };
 }
 
@@ -211,32 +211,31 @@ export function RescueRequestsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+    <div className="page-shell page-active">
+      <div className="page-header">
         <div>
-          <p className="page-eyebrow">Operations</p>
-          <h1 className="mt-2 text-3xl font-semibold text-slate-950">Rescue requests</h1>
-          <p className="mt-2 max-w-3xl text-sm text-slate-600">
-            Rescue intake now flows directly into optimization. Create a request, rank eligible volunteers,
-            review the generated dispatch draft, and confirm assignment from recommendations.
+          <div className="page-kicker">Operations</div>
+          <h1 className="page-title">Rescue requests</h1>
+          <p className="page-description">
+            Rescue intake now flows directly into optimization. Create a request, rank eligible volunteers, review the generated dispatch draft, and confirm assignment from recommendations.
           </p>
         </div>
-        <div className="flex flex-wrap gap-3">
+        <div className="page-toolbar">
           <AIActionButton
             disabled={!canManage || rescueAssist.loading}
             label="AI Assist"
             loading={rescueAssist.loading}
             onSelect={handleAssist}
           />
-          <button className="secondary-button" onClick={loadRequests} type="button">
-            Refresh queue
+          <button className="btn-outline" onClick={loadRequests} type="button">
+            Refresh Queue
           </button>
         </div>
       </div>
 
       <ErrorAlert message={pageError} />
 
-      <div className="grid gap-6 xl:grid-cols-[1fr,1.1fr]">
+      <div className="grid gap-6 xl:grid-cols-2">
         <SectionCard
           actions={
             <AIActionButton
@@ -248,6 +247,7 @@ export function RescueRequestsPage() {
           }
           description="Creates a live rescue request, then routes directly into ranked volunteer recommendations."
           title="Create rescue request"
+          titleTag="intake"
         >
           <form className="grid gap-4 md:grid-cols-2" onSubmit={handleRequestSubmit}>
             <div className="md:col-span-2">
@@ -339,63 +339,64 @@ export function RescueRequestsPage() {
               />
             </div>
             <div className="md:col-span-2 space-y-3">
-              {assistNotice ? (
-                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                  {assistNotice}
-                </div>
-              ) : null}
+              {assistNotice ? <div className="notice notice-success">{assistNotice}</div> : null}
               <ErrorAlert message={requestError || rescueAssist.error} />
               <div className="flex flex-wrap gap-3">
-                <button className="primary-button" disabled={!canManage || requestSaving} type="submit">
-                  {requestSaving ? "Creating..." : "Create and optimize"}
+                <button className="btn-primary btn-full sm:w-auto" disabled={!canManage || requestSaving} type="submit">
+                  {requestSaving ? "Creating..." : "Create and Optimize"}
                 </button>
                 {!canManage ? (
-                  <span className="inline-flex items-center rounded-full bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700">
-                    Read-only: your role cannot create requests.
-                  </span>
+                  <div className="notice notice-ai">Read-only: your role cannot create requests.</div>
                 ) : null}
               </div>
             </div>
           </form>
         </SectionCard>
 
-        <SectionCard description="Each rescue request can be reviewed in detail or sent into the optimizer." title="Request queue">
+        <SectionCard description="Each rescue request can be reviewed in detail or sent into the optimizer." title="Request queue" titleTag="live table">
           {loading ? (
-            <div className="py-10 text-center text-sm text-slate-500">Loading rescue queue...</div>
+            <div className="loading-wrap">
+              <div className="loading-state">
+                <span className="pulse-dot" />
+                <span>Loading rescue queue...</span>
+              </div>
+            </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-left text-sm">
-                <thead className="border-b border-slate-200 text-slate-500">
+            <div className="table-wrapper">
+              <table>
+                <thead>
                   <tr>
-                    <th className="px-3 py-3 font-medium">Request</th>
-                    <th className="px-3 py-3 font-medium">Urgency</th>
-                    <th className="px-3 py-3 font-medium">Skills</th>
-                    <th className="px-3 py-3 font-medium">Status</th>
-                    <th className="px-3 py-3 font-medium">Created</th>
-                    <th className="px-3 py-3 font-medium">Actions</th>
+                    <th>Request</th>
+                    <th>Urgency</th>
+                    <th>Skills</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {requests.map((request) => (
-                    <tr className="border-b border-slate-100" key={request.id}>
-                      <td className="px-3 py-4">
-                        <div className="font-medium text-slate-950">{request.location}</div>
-                        <div className="text-xs text-slate-500">
-                          #{request.id} • {truncateText(request.notes || "No notes", 56)}
-                        </div>
+                    <tr key={request.id}>
+                      <td>
+                        <div className="td-primary">{request.location}</div>
+                        <div className="table-meta">#{request.id} / {truncateText(request.notes || "No notes", 56)}</div>
                       </td>
-                      <td className="px-3 py-4 text-slate-600">{request.urgency || "n/a"}</td>
-                      <td className="px-3 py-4 text-slate-600">{formatSkills(request.required_skills)}</td>
-                      <td className="px-3 py-4">
+                      <td>
+                        <UrgencyChip value={request.urgency || "N/A"} />
+                      </td>
+                      <td>
+                        <SkillTags skills={request.required_skills} />
+                      </td>
+                      <td>
                         <StatusBadge status={request.status} />
                       </td>
-                      <td className="px-3 py-4 text-slate-600">{formatDateTime(request.created_at)}</td>
-                      <td className="px-3 py-4">
-                        <div className="flex flex-wrap gap-2">
-                          <Link className="secondary-button px-3 py-2 text-xs" to={`/rescue-requests/${request.id}`}>
+                      <td>{formatDateTime(request.created_at)}</td>
+                      <td>
+                        <div className="table-actions">
+                          <Link className="btn-outline" to={`/rescue-requests/${request.id}`}>
                             Detail
                           </Link>
-                          <Link className="primary-button px-3 py-2 text-xs" to={`/rescue-requests/${request.id}/matches`}>
+                          <Link className="btn-primary" to={`/rescue-requests/${request.id}/matches`}>
                             Optimize
                           </Link>
                         </div>
@@ -404,8 +405,8 @@ export function RescueRequestsPage() {
                   ))}
                   {!requests.length ? (
                     <tr>
-                      <td className="px-3 py-10 text-center text-slate-500" colSpan="6">
-                        No rescue requests found.
+                      <td className="text-center" colSpan="6">
+                        <div className="empty-state">No rescue requests found.</div>
                       </td>
                     </tr>
                   ) : null}

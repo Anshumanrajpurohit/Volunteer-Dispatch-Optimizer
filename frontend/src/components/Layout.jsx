@@ -1,90 +1,158 @@
-import { NavLink, Outlet } from "react-router-dom";
+﻿import { NavLink, Outlet, useLocation } from "react-router-dom";
 
-import { API_BASE_URL } from "../api/client";
 import { useAuth } from "../hooks/useAuth";
 import { VolunteerAlertCenter } from "./VolunteerAlertCenter";
 
 const coordinatorNavigation = [
-  { label: "Dashboard", to: "/" },
-  { label: "Rescue Requests", to: "/rescue-requests" },
-  { label: "Volunteers", to: "/volunteers" },
-  { label: "Dispatch Logs", to: "/dispatch-logs" },
-  { label: "Chat", to: "/chat" },
+  { icon: "DB", label: "Dashboard", to: "/" },
+  { icon: "RQ", label: "Rescue Requests", to: "/rescue-requests" },
+  { icon: "VO", label: "Volunteers", to: "/volunteers" },
+  { icon: "DL", label: "Dispatch Logs", to: "/dispatch-logs" },
+  { icon: "CH", label: "Chat", to: "/chat" },
 ];
 
 const volunteerNavigation = [
-  { label: "Dashboard", to: "/" },
-  { label: "My Rescues", to: "/my-rescues" },
-  { label: "Chat", to: "/chat" },
-  { label: "Profile", to: "/profile" },
+  { icon: "DB", label: "Dashboard", to: "/" },
+  { icon: "MR", label: "My Rescues", to: "/my-rescues" },
+  { icon: "CH", label: "Chat", to: "/chat" },
+  { icon: "PR", label: "Profile", to: "/profile" },
 ];
+
+function getInitials(value) {
+  const parts = String(value || "RC")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (!parts.length) {
+    return "RC";
+  }
+
+  return parts
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("");
+}
+
+function getCurrentSection(pathname, isVolunteer) {
+  if (pathname === "/") {
+    return "Dashboard";
+  }
+
+  if (pathname.startsWith("/rescue-requests/") && pathname.endsWith("/matches")) {
+    return "Optimizer";
+  }
+
+  if (pathname.startsWith("/rescue-requests/")) {
+    return "Rescue Detail";
+  }
+
+  if (pathname.startsWith("/my-rescues/") && pathname !== "/my-rescues") {
+    return "My Rescue Detail";
+  }
+
+  if (pathname === "/rescue-requests") {
+    return "Rescue Requests";
+  }
+
+  if (pathname === "/volunteers") {
+    return "Volunteers";
+  }
+
+  if (pathname === "/dispatch-logs") {
+    return "Dispatch Logs";
+  }
+
+  if (pathname === "/chat") {
+    return "Rescue Chat";
+  }
+
+  if (pathname === "/my-rescues") {
+    return "My Rescues";
+  }
+
+  if (pathname === "/profile") {
+    return "Profile";
+  }
+
+  return isVolunteer ? "Volunteer Console" : "Mission Control";
+}
 
 export function Layout() {
   const { logout, user } = useAuth();
+  const location = useLocation();
   const role = String(user?.role || "").toLowerCase();
   const isVolunteer = role === "volunteer";
   const navigation = isVolunteer ? volunteerNavigation : coordinatorNavigation;
-  const eyebrow = isVolunteer ? "Volunteer Rescue Panel" : "Volunteer Rescue Console";
-  const title = isVolunteer
-    ? "Track your assignments and respond from the field."
-    : "Coordinate rescue work without leaving the queue.";
-  const description = isVolunteer
-    ? "View only your assigned rescues, respond to dispatches, and chat with coordinators in real time."
-    : "This frontend talks directly to the FastAPI backend at";
+  const currentSection = getCurrentSection(location.pathname, isVolunteer);
+  const breadcrumbRoot = isVolunteer ? "Volunteer Panel" : "Mission Control";
+  const roleLabel = user?.role || "user";
+  const userLabel = user?.username || "Responder";
 
   return (
-    <div className="min-h-screen">
-      <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 px-4 py-6 md:px-6">
-        <header className="hero-surface">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-3xl">
-              <p className="page-eyebrow text-white/70">{eyebrow}</p>
-              <h1 className="mt-3 text-4xl font-semibold tracking-tight text-white">{title}</h1>
-              <p className="mt-3 text-sm text-cyan-100/85">
-                {description}
-                {!isVolunteer ? (
-                  <>
-                    <span className="mx-1 font-medium text-white">{API_BASE_URL}</span>
-                    with JWT-protected Axios requests and live operational views.
-                  </>
-                ) : null}
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="rounded-3xl border border-white/15 bg-white/10 px-4 py-3 text-sm text-white backdrop-blur">
-                <div className="font-medium">{user?.username}</div>
-                <div className="mt-1 text-xs uppercase tracking-[0.24em] text-cyan-100/70">{user?.role || "user"}</div>
-              </div>
-              <button className="hero-button" onClick={logout} type="button">
-                Logout
-              </button>
-            </div>
-          </div>
-        </header>
-
-        {isVolunteer ? <VolunteerAlertCenter /> : null}
-
-        <nav className="panel-surface flex flex-wrap gap-2">
+    <div className="app-shell">
+      <aside className="sidebar">
+        <div className="sidebar-brand">RC</div>
+        <nav className="sidebar-nav">
           {navigation.map((item) => (
             <NavLink
-              className={({ isActive }) =>
-                isActive
-                  ? "rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white shadow-sm"
-                  : "rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-950"
-              }
+              className={({ isActive }) => `sidebar-nav-item${isActive ? " active" : ""}`}
               key={item.to}
               to={item.to}
             >
-              {item.label}
+              <span className="sidebar-nav-icon">{item.icon}</span>
+              <span className="sidebar-tooltip">{item.label}</span>
             </NavLink>
           ))}
         </nav>
+        <div className="sidebar-bottom">
+          <div className="sidebar-role-badge">{roleLabel}</div>
+        </div>
+      </aside>
 
-        <main className="flex-1">
+      <div className="main">
+        <header className="topbar">
+          <div className="topbar-breadcrumb">
+            <span>{breadcrumbRoot}</span>
+            <span>/</span>
+            <span className="topbar-breadcrumb-current">{currentSection}</span>
+          </div>
+          <div className="topbar-spacer" />
+          <div className="live-indicator">
+            <span className="pulse-dot" />
+            <span>Live</span>
+          </div>
+          <div className="user-chip">
+            <div className="user-avatar">{getInitials(userLabel)}</div>
+            <div>
+              <div className="user-chip-name">{userLabel}</div>
+              <div className="user-chip-role">{roleLabel}</div>
+            </div>
+          </div>
+          <button className="logout-button" onClick={logout} type="button">
+            Logout
+          </button>
+        </header>
+
+        <main className="content">
           <Outlet />
         </main>
       </div>
+
+      {isVolunteer ? <VolunteerAlertCenter /> : null}
+
+      <nav className="mobile-tabbar">
+        {navigation.map((item) => (
+          <NavLink
+            className={({ isActive }) => `mobile-tabbar-item${isActive ? " active" : ""}`}
+            key={item.to}
+            to={item.to}
+          >
+            <span className="mobile-tabbar-icon">{item.icon}</span>
+            <span>{item.label}</span>
+          </NavLink>
+        ))}
+      </nav>
     </div>
   );
 }

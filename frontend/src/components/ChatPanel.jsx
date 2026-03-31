@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+ï»¿import { useEffect, useMemo, useRef, useState } from "react";
 
 import { getChatMessages, sendChatMessage } from "../api/endpoints";
-import { ErrorAlert } from "./ErrorAlert";
 import { useAIAssist } from "../hooks/useAIAssist";
+import { ErrorAlert } from "./ErrorAlert";
 
 const POLL_INTERVAL_MS = 8000;
 
@@ -167,9 +167,9 @@ export function ChatPanel({
 
   if (!canChat) {
     return (
-      <div className="flex min-h-[18rem] items-center justify-center rounded-3xl border border-dashed border-slate-300 bg-slate-50/70 px-4 py-10 text-center text-sm text-slate-500">
-        <div className="max-w-md space-y-2">
-          <div className="text-base font-medium text-slate-950">Chat becomes available after volunteer assignment</div>
+      <div className="empty-state">
+        <div className="mx-auto max-w-md space-y-2">
+          <div className="text-base font-semibold text-[var(--text)]">Chat becomes available after volunteer assignment</div>
           <div>
             Once a volunteer is assigned and the rescue is in dispatched status, this section will show the live coordination thread.
           </div>
@@ -180,64 +180,43 @@ export function ChatPanel({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-3xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-sm text-slate-600">
-        Active assignment chat with <span className="font-medium text-slate-950">{volunteerName || `Volunteer #${volunteerId}`}</span>
+      <div className="chat-banner">
+        Active assignment chat with <strong className="text-[var(--text)]">{volunteerName || `Volunteer #${volunteerId}`}</strong>
       </div>
 
       <ErrorAlert message={error || (showSuggestReply ? suggestReplyAssist.error : "")} />
-      {notice ? (
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-          {notice}
-        </div>
-      ) : null}
+      {notice ? <div className="notice notice-success">{notice}</div> : null}
 
-      <div
-        className="max-h-[24rem] min-h-[18rem] overflow-y-auto rounded-3xl border border-slate-200 bg-white p-4"
-        ref={listRef}
-      >
+      <div className="chat-messages" ref={listRef}>
         {loading ? (
-          <div className="py-10 text-center text-sm text-slate-500">Loading chat history...</div>
-        ) : messages.length ? (
-          <div className="space-y-3">
-            {messages.map((item) => {
-              const isCoordinator = item.sender_type === "coordinator";
-              return (
-                <article
-                  className={`flex ${isCoordinator ? "justify-end" : "justify-start"}`}
-                  key={item.id}
-                >
-                  <div
-                    className={`max-w-[85%] rounded-3xl px-4 py-3 shadow-sm ${
-                      isCoordinator
-                        ? "border border-cyan-200 bg-cyan-50 text-cyan-950"
-                        : "border border-slate-200 bg-slate-50 text-slate-900"
-                    }`}
-                  >
-                    <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.18em] text-slate-500">
-                      <span>{item.sender_type}</span>
-                      <span>•</span>
-                      <span>{formatTimestamp(item.created_at)}</span>
-                    </div>
-                    <div className="mt-2 whitespace-pre-wrap text-sm leading-6">{item.message}</div>
-                  </div>
-                </article>
-              );
-            })}
+          <div className="loading-wrap py-0">
+            <div className="loading-state">
+              <span className="pulse-dot" />
+              <span>Loading chat history...</span>
+            </div>
           </div>
+        ) : messages.length ? (
+          messages.map((item) => {
+            const isOutgoing = item.sender_type === senderType;
+            return (
+              <div className={`chat-message ${isOutgoing ? "outgoing" : "incoming"}`} key={item.id}>
+                <div className="chat-meta">
+                  {item.sender_type} / {formatTimestamp(item.created_at)}
+                </div>
+                <div className="whitespace-pre-wrap">{item.message}</div>
+              </div>
+            );
+          })
         ) : (
-          <div className="py-10 text-center text-sm text-slate-500">
+          <div className="empty-state !border-none !bg-transparent px-0 py-10">
             No chat messages yet. Start the coordination thread when needed.
           </div>
         )}
       </div>
 
-      <form className="space-y-3" onSubmit={handleSubmit}>
+      <form className="chat-compose" onSubmit={handleSubmit}>
         <textarea
-          className={`w-full rounded-3xl border px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:ring-4 ${
-            aiFilled
-              ? "border-amber-300 bg-amber-50/70 focus:border-amber-400 focus:ring-amber-100"
-              : "border-slate-200 bg-white focus:border-cyan-400 focus:ring-cyan-100"
-          }`}
+          className={aiFilled ? "ai-filled-field" : ""}
           onChange={(event) => {
             setDraft(event.target.value);
             setAiFilled(false);
@@ -249,16 +228,18 @@ export function ChatPanel({
         <div className={`flex flex-wrap items-center gap-3 ${showSuggestReply ? "justify-between" : "justify-end"}`}>
           {showSuggestReply ? (
             <button
-              className="secondary-button"
+              className="btn-outline"
               disabled={suggestReplyAssist.loading || sending}
               onClick={handleSuggestReply}
               type="button"
             >
-              {suggestReplyAssist.loading ? "Suggesting..." : "Suggest Reply"}
+              <span className="btn-prefix">AI</span>
+              <span>{suggestReplyAssist.loading ? "Suggesting..." : "Suggest Reply"}</span>
             </button>
           ) : null}
-          <button className="primary-button" disabled={!draft.trim() || sending} type="submit">
-            {sending ? "Sending..." : "Send message"}
+          <button className="btn-primary" disabled={!draft.trim() || sending} type="submit">
+            <span>{sending ? "Sending..." : "Send Message"}</span>
+            <span className="btn-suffix">&gt;&gt;</span>
           </button>
         </div>
       </form>

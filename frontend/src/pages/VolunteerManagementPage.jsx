@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 
 import { apiRequest } from "../api/client";
 import { FormField } from "../components/FormField";
@@ -179,7 +179,7 @@ export function VolunteerManagementPage() {
         {!loading ? (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-200 text-sm">
-              <thead className="bg-slate-50 text-left text-slate-600">
+              <thead className="soft-layout-surface text-left text-slate-600">
                 <tr>
                   <th className="px-6 py-3 font-medium">Volunteer</th>
                   <th className="px-6 py-3 font-medium">Skills</th>
@@ -189,7 +189,7 @@ export function VolunteerManagementPage() {
                   <th className="px-6 py-3 font-medium">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 bg-white">
+              <tbody className="soft-layout-surface divide-y divide-slate-100">
                 {sortedVolunteers.map((volunteer) => (
                   <tr key={volunteer.id}>
                     <td className="px-6 py-4">
@@ -199,7 +199,7 @@ export function VolunteerManagementPage() {
                     <td className="px-6 py-4 text-slate-600">{joinList(volunteer.skills) || "-"}</td>
                     <td className="px-6 py-4 text-slate-600">{volunteer.availability_start} - {volunteer.availability_end}</td>
                     <td className="px-6 py-4 text-slate-600">{volunteer.successful_responses}/{volunteer.total_dispatches}</td>
-                    <td className="px-6 py-4"><StatusBadge value={volunteer.active_status ? "active" : "inactive"} /></td>
+                    <td className="px-6 py-4"><StatusBadge status={volunteer.active_status ? "active" : "inactive"} /></td>
                     <td className="px-6 py-4">
                       <button type="button" className="secondary-btn" onClick={() => startEdit(volunteer)}>
                         Edit
@@ -215,3 +215,6 @@ export function VolunteerManagementPage() {
     </div>
   );
 }
+
+
+

@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+ï»¿import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { getVolunteerAlerts, respondToVolunteerRescue } from "../api/endpoints";
+import { StatusBadge, UrgencyChip } from "./StatusBadge";
 
 const POLL_INTERVAL_MS = 8000;
 
@@ -55,17 +56,19 @@ export function VolunteerAlertCenter() {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 w-full max-w-md rounded-[1.75rem] border border-amber-300 bg-white p-5 shadow-[0_24px_60px_rgba(15,23,42,0.18)]">
+    <div className="volunteer-alert page-active">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <div className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-700">New Dispatch Alert</div>
-          <div className="mt-2 text-lg font-semibold text-slate-950">{activeAlert.location}</div>
-          <div className="mt-1 text-sm text-slate-600">
-            {activeAlert.animal_type || "Animal not specified"} • urgency {activeAlert.urgency || "n/a"}
+          <div className="page-kicker">New Dispatch Alert</div>
+          <div className="mt-3 text-xl font-bold text-[var(--text)]">{activeAlert.location}</div>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <StatusBadge status={activeAlert.current_response_status || "contacted"} />
+            <UrgencyChip value={activeAlert.urgency || "N/A"} />
           </div>
+          <div className="mt-3 text-sm text-[var(--text2)]">{activeAlert.animal_type || "Animal not specified"}</div>
         </div>
         <button
-          className="rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-500 transition hover:border-slate-300 hover:text-slate-700"
+          className="btn-ghost"
           onClick={() => setDismissedIds((current) => [...current, activeAlert.rescue_request_id])}
           type="button"
         >
@@ -73,21 +76,21 @@ export function VolunteerAlertCenter() {
         </button>
       </div>
 
-      <div className="mt-4 rounded-3xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
+      <div className="notice notice-muted mt-4">
         {activeAlert.dispatch_message || "A coordinator assigned a new rescue and is waiting for your response."}
       </div>
 
       <div className="mt-4 flex flex-wrap gap-3">
-        <button className="primary-button" disabled={responding} onClick={() => handleResponse("accepted")} type="button">
+        <button className="btn-primary" disabled={responding} onClick={() => handleResponse("accepted")} type="button">
           {responding ? "Working..." : "Accept"}
         </button>
-        <button className="danger-button" disabled={responding} onClick={() => handleResponse("declined")} type="button">
+        <button className="btn-danger" disabled={responding} onClick={() => handleResponse("declined")} type="button">
           Decline
         </button>
-        <button className="secondary-button" onClick={() => navigate(`/my-rescues/${activeAlert.rescue_request_id}`)} type="button">
+        <button className="btn-outline" onClick={() => navigate(`/my-rescues/${activeAlert.rescue_request_id}`)} type="button">
           Open Rescue
         </button>
-        <button className="secondary-button" onClick={() => navigate(`/chat?rescueId=${activeAlert.rescue_request_id}`)} type="button">
+        <button className="btn-outline" onClick={() => navigate(`/chat?rescueId=${activeAlert.rescue_request_id}`)} type="button">
           Open Chat
         </button>
       </div>

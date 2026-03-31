@@ -1,35 +1,85 @@
-const toneMap = {
-  open: "bg-cyan-100 text-cyan-700",
-  active: "bg-emerald-100 text-emerald-700",
-  available: "bg-emerald-100 text-emerald-700",
-  accepted: "bg-emerald-100 text-emerald-700",
-  completed: "bg-emerald-100 text-emerald-700",
-  resolved: "bg-emerald-100 text-emerald-700",
-  contacted: "bg-amber-100 text-amber-700",
-  pending: "bg-amber-100 text-amber-700",
-  dispatched: "bg-indigo-100 text-indigo-700",
-  on_the_way: "bg-indigo-100 text-indigo-700",
-  inactive: "bg-slate-200 text-slate-700",
-  unknown: "bg-slate-100 text-slate-700",
-  outside_window: "bg-rose-100 text-rose-700",
-  declined: "bg-rose-100 text-rose-700",
-  cancelled: "bg-rose-100 text-rose-700",
+﻿function normalizeStatusValue(status) {
+  return String(status || "unknown")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "_");
+}
+
+const statusVariants = {
+  open: "open",
+  pending: "open",
+  dispatched: "dispatched",
+  on_the_way: "on-way",
+  accepted: "accepted",
+  active: "active",
+  available: "active",
+  completed: "active",
+  resolved: "active",
+  assigned: "assigned",
+  inactive: "assigned",
+  unknown: "assigned",
+  contacted: "contacted",
+  outside_window: "contacted",
+  declined: "contacted",
+  cancelled: "contacted",
 };
 
-function formatStatus(status) {
-  if (!status) {
-    return "Unknown";
-  }
-
-  return String(status)
+function formatStatusLabel(status) {
+  const normalized = normalizeStatusValue(status);
+  return normalized
     .split("_")
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
 }
 
-export function StatusBadge({ status }) {
-  const normalized = String(status || "unknown").toLowerCase();
-  const classes = toneMap[normalized] || "bg-slate-100 text-slate-700";
+function normalizeSkills(skills) {
+  if (Array.isArray(skills)) {
+    return skills.filter(Boolean);
+  }
 
-  return <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${classes}`}>{formatStatus(normalized)}</span>;
+  if (typeof skills === "string") {
+    return skills
+      .split(",")
+      .map((skill) => skill.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
+export function getStatusVariant(status) {
+  return statusVariants[normalizeStatusValue(status)] || "assigned";
+}
+
+export function getRequestCardClass(status) {
+  return `request-card ${getStatusVariant(status)}`;
+}
+
+export function getStatusDotClass(status) {
+  return `status-dot ${getStatusVariant(status).replace("on-way", "on-the-way")}`;
+}
+
+export function StatusBadge({ status, className = "" }) {
+  const variant = getStatusVariant(status);
+
+  return <span className={`badge ${variant} ${className}`.trim()}>{formatStatusLabel(status)}</span>;
+}
+
+export function UrgencyChip({ value, className = "" }) {
+  return <span className={`urgency-chip ${className}`.trim()}>{`URG ${value ?? "N/A"}`}</span>;
+}
+
+export function SkillTags({ skills, className = "", emptyLabel = "No skills" }) {
+  const values = normalizeSkills(skills);
+  const items = values.length ? values : [emptyLabel];
+
+  return (
+    <div className={`skill-tags ${className}`.trim()}>
+      {items.map((skill) => (
+        <span className="skill-tag" key={skill}>
+          {skill}
+        </span>
+      ))}
+    </div>
+  );
 }

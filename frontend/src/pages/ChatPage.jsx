@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+ï»¿import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import { getDispatchLogs, getVolunteerRescues } from "../api/endpoints";
 import { ChatPanel } from "../components/ChatPanel";
 import { ErrorAlert } from "../components/ErrorAlert";
 import { SectionCard } from "../components/SectionCard";
-import { StatusBadge } from "../components/StatusBadge";
+import { StatusBadge, UrgencyChip } from "../components/StatusBadge";
 import { useAuth } from "../hooks/useAuth";
 import { formatDateTime } from "../utils/format";
 
@@ -126,68 +126,66 @@ export function ChatPage() {
   }, [selectedRescueId, selectedThread, setSearchParams, threads]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+    <div className="page-shell page-active">
+      <div className="page-header">
         <div>
-          <p className="page-eyebrow">Communication</p>
-          <h1 className="mt-2 text-3xl font-semibold text-slate-950">Rescue chat</h1>
-          <p className="mt-2 max-w-3xl text-sm text-slate-600">
+          <div className="page-kicker">Communication</div>
+          <h1 className="page-title">Rescue chat</h1>
+          <p className="page-description">
             {isVolunteer
               ? "Open the live coordination thread for your currently assigned rescues."
               : "Monitor and continue live coordination threads for dispatched rescue assignments."}
           </p>
         </div>
-        <div className="rounded-full bg-white/80 px-4 py-2 text-sm text-slate-600 shadow-sm">
-          Visible threads
-          <span className="ml-2 font-medium text-slate-900">{threads.length}</span>
+        <div className="page-chip">
+          Visible threads <strong>{threads.length}</strong>
         </div>
       </div>
 
       <ErrorAlert message={error} />
 
-      <div className="grid gap-6 xl:grid-cols-[0.92fr,1.08fr]">
+      <div className="chat-container">
         <SectionCard
           description={isVolunteer ? "Only rescues assigned to you appear here." : "Only active dispatched rescue chats appear here."}
           title="Available chats"
+          titleTag="thread list"
         >
           {loading ? (
-            <div className="py-10 text-center text-sm text-slate-500">Loading rescue chats...</div>
+            <div className="loading-wrap">
+              <div className="loading-state">
+                <span className="pulse-dot" />
+                <span>Loading rescue chats...</span>
+              </div>
+            </div>
           ) : threads.length ? (
-            <div className="space-y-4">
+            <div className="chat-thread-list">
               {threads.map((thread) => {
                 const isSelected = selectedThread?.rescueId === thread.rescueId;
                 return (
                   <button
-                    className={`w-full rounded-3xl border px-5 py-4 text-left transition ${
-                      isSelected
-                        ? "border-cyan-300 bg-cyan-50/80 shadow-sm"
-                        : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
-                    }`}
+                    className={`chat-thread-item${isSelected ? " active" : ""}`}
                     key={thread.rescueId}
                     onClick={() => setSearchParams({ rescueId: String(thread.rescueId) })}
                     type="button"
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
-                        <div className="text-base font-semibold text-slate-950">{thread.location}</div>
-                        <div className="mt-1 text-sm text-slate-600">
-                          {thread.animalType || "Animal not specified"} • urgency {thread.urgency || "n/a"}
+                        <div className="td-primary">{thread.location}</div>
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <StatusBadge status={thread.status} />
+                          <UrgencyChip value={thread.urgency || "N/A"} />
                         </div>
                       </div>
-                      <StatusBadge status={thread.status} />
                     </div>
-                    <div className="mt-3 text-sm text-slate-600">
-                      {thread.volunteerName || `Volunteer #${thread.volunteerId}`}
-                    </div>
-                    <div className="mt-2 text-xs uppercase tracking-[0.2em] text-slate-400">
-                      Updated {formatDateTime(thread.updatedAt)}
-                    </div>
+                    <div className="mt-3 muted-copy">{thread.animalType || "Animal not specified"}</div>
+                    <div className="mt-2 subdued-copy">{thread.volunteerName || `Volunteer #${thread.volunteerId}`}</div>
+                    <div className="table-meta">Updated {formatDateTime(thread.updatedAt)}</div>
                   </button>
                 );
               })}
             </div>
           ) : (
-            <div className="rounded-3xl border border-dashed border-slate-300 px-4 py-12 text-center text-sm text-slate-500">
+            <div className="empty-state">
               {isVolunteer
                 ? "Chat threads appear here when you have a currently dispatched rescue assignment."
                 : "Chat threads appear here after a rescue is assigned and moved into dispatched status."}
@@ -196,9 +194,10 @@ export function ChatPage() {
         </SectionCard>
 
         <SectionCard
-          actions={selectedThread ? <Link className="secondary-button" to={selectedThread.detailPath}>Open rescue detail</Link> : null}
+          actions={selectedThread ? <Link className="btn-outline" to={selectedThread.detailPath}>Open Rescue Detail</Link> : null}
           description={selectedThread ? "Use chat to coordinate without leaving the assignment thread." : "Select a rescue thread to start chatting."}
           title="Conversation"
+          titleTag="live channel"
         >
           {selectedThread ? (
             <ChatPanel
@@ -209,9 +208,7 @@ export function ChatPage() {
               volunteerName={selectedThread.volunteerName}
             />
           ) : (
-            <div className="flex min-h-[24rem] items-center justify-center rounded-3xl border border-dashed border-slate-300 bg-slate-50/70 px-4 py-10 text-center text-sm text-slate-500">
-              Select an available rescue chat from the list to open the conversation panel.
-            </div>
+            <div className="empty-state">Select an available rescue chat from the list to open the conversation panel.</div>
           )}
         </SectionCard>
       </div>

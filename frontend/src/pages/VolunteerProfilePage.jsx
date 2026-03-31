@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 
 import { getVolunteerMe } from "../api/endpoints";
 import { ErrorAlert } from "../components/ErrorAlert";
@@ -47,79 +47,75 @@ export function VolunteerProfilePage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <p className="page-eyebrow">Volunteer View</p>
-        <h1 className="mt-2 text-3xl font-semibold text-slate-950">My profile</h1>
-        <p className="mt-2 max-w-3xl text-sm text-slate-600">
-          Review the volunteer record and login identity currently linked to your assignment access.
-        </p>
+    <div className="page-shell page-active">
+      <div className="page-header">
+        <div>
+          <div className="page-kicker">Volunteer View</div>
+          <h1 className="page-title">My profile</h1>
+          <p className="page-description">
+            Review the volunteer record and login identity currently linked to your assignment access.
+          </p>
+        </div>
       </div>
 
       <ErrorAlert message={error} />
 
       {profile ? (
         <>
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <StatCard label="Volunteer ID" meta="Linked volunteer record" tone="cyan" value={profile.volunteer?.id || "-"} />
-            <StatCard label="Dispatches" meta="Total assignment history" tone="amber" value={profile.volunteer?.total_dispatches ?? 0} />
-            <StatCard label="Successful" meta="Accepted or completed responses" tone="emerald" value={profile.volunteer?.successful_responses ?? 0} />
-            <StatCard label="Account role" meta="JWT access scope" tone="slate" value={profile.user?.role || "volunteer"} />
+          <div className="stat-grid">
+            <StatCard label="Volunteer ID" meta="Linked volunteer record" tone="amber" value={profile.volunteer?.id || "-"} />
+            <StatCard label="Dispatches" meta="Total assignment history" tone="red" value={profile.volunteer?.total_dispatches ?? 0} />
+            <StatCard label="Successful" meta="Accepted or completed responses" tone="teal" value={profile.volunteer?.successful_responses ?? 0} />
+            <StatCard label="Account Role" meta="JWT access scope" tone="blue" value={profile.user?.role || "volunteer"} />
           </div>
 
-          <div className="grid gap-6 xl:grid-cols-[0.95fr,1.05fr]">
-            <SectionCard description="Identity and access details from the linked user account." title="Login profile">
-              <div className="space-y-4 rounded-3xl border border-slate-200 bg-slate-50/70 p-5 text-sm text-slate-600">
-                <div>
-                  <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Username</div>
-                  <div className="mt-1 text-base font-semibold text-slate-950">{profile.user?.username || "N/A"}</div>
+          <div className="grid gap-6 xl:grid-cols-2">
+            <SectionCard description="Identity and access details from the linked user account." title="Login profile" titleTag="auth">
+              <div className="info-card">
+                <div className="info-row">
+                  <span className="info-label">Username</span>
+                  <span className="info-value">{profile.user?.username || "N/A"}</span>
                 </div>
-                <div>
-                  <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Email</div>
-                  <div className="mt-1 text-base text-slate-900">{profile.user?.email || profile.volunteer?.email || "N/A"}</div>
+                <div className="info-row">
+                  <span className="info-label">Email</span>
+                  <span className="info-value">{profile.user?.email || profile.volunteer?.email || "N/A"}</span>
                 </div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <div>
-                    <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Role</div>
-                    <div className="mt-1"><StatusBadge status={profile.user?.role || "volunteer"} /></div>
-                  </div>
-                  <div>
-                    <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Record status</div>
-                    <div className="mt-1"><StatusBadge status={profile.volunteer?.active_status ? "active" : "inactive"} /></div>
-                  </div>
+                <div className="info-row">
+                  <span className="info-label">Role</span>
+                  <span className="info-value"><StatusBadge status={profile.user?.role || "volunteer"} /></span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">Record status</span>
+                  <span className="info-value"><StatusBadge status={profile.volunteer?.active_status ? "active" : "inactive"} /></span>
                 </div>
               </div>
             </SectionCard>
 
-            <SectionCard description="Operational details taken from the volunteer directory record." title="Volunteer record">
-              <div className="space-y-4 rounded-3xl border border-slate-200 bg-white p-5 text-sm text-slate-600">
-                <div>
-                  <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Name</div>
-                  <div className="mt-1 text-base font-semibold text-slate-950">{profile.volunteer?.name || "N/A"}</div>
+            <SectionCard description="Operational details taken from the volunteer directory record." title="Volunteer record" titleTag="field record">
+              <div className="info-card">
+                <div className="info-row">
+                  <span className="info-label">Name</span>
+                  <span className="info-value">{profile.volunteer?.name || "N/A"}</span>
                 </div>
-                <div>
-                  <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Phone</div>
-                  <div className="mt-1 text-base text-slate-900">{profile.volunteer?.phone || "N/A"}</div>
+                <div className="info-row">
+                  <span className="info-label">Phone</span>
+                  <span className="info-value">{profile.volunteer?.phone || "N/A"}</span>
                 </div>
-                <div>
-                  <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Coverage location</div>
-                  <div className="mt-1 text-base text-slate-900">
-                    {profile.volunteer?.latitude ?? "N/A"}, {profile.volunteer?.longitude ?? "N/A"}
-                  </div>
+                <div className="info-row">
+                  <span className="info-label">Coverage location</span>
+                  <span className="info-value">{profile.volunteer?.latitude ?? "N/A"}, {profile.volunteer?.longitude ?? "N/A"}</span>
                 </div>
-                <div>
-                  <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Skills</div>
-                  <div className="mt-1 text-base text-slate-900">{formatSkills(profile.volunteer?.skills)}</div>
+                <div className="info-row">
+                  <span className="info-label">Skills</span>
+                  <span className="info-value">{formatSkills(profile.volunteer?.skills)}</span>
                 </div>
-                <div>
-                  <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Availability window</div>
-                  <div className="mt-1 text-base text-slate-900">
-                    {formatTimeValue(profile.volunteer?.availability_start)} - {formatTimeValue(profile.volunteer?.availability_end)}
-                  </div>
+                <div className="info-row">
+                  <span className="info-label">Availability window</span>
+                  <span className="info-value">{formatTimeValue(profile.volunteer?.availability_start)} - {formatTimeValue(profile.volunteer?.availability_end)}</span>
                 </div>
-                <div>
-                  <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Last updated</div>
-                  <div className="mt-1 text-base text-slate-900">{formatDateTime(profile.volunteer?.updated_at)}</div>
+                <div className="info-row">
+                  <span className="info-label">Last updated</span>
+                  <span className="info-value">{formatDateTime(profile.volunteer?.updated_at)}</span>
                 </div>
               </div>
             </SectionCard>

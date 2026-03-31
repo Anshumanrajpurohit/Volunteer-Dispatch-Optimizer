@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+ï»¿import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import { getVolunteerRescue, respondToVolunteerRescue } from "../api/endpoints";
@@ -6,15 +6,15 @@ import { ChatPanel } from "../components/ChatPanel";
 import { ErrorAlert } from "../components/ErrorAlert";
 import { LoadingState } from "../components/LoadingState";
 import { SectionCard } from "../components/SectionCard";
-import { StatusBadge } from "../components/StatusBadge";
+import { SkillTags, StatusBadge, UrgencyChip } from "../components/StatusBadge";
 import { useAuth } from "../hooks/useAuth";
-import { formatDateTime, formatSkills } from "../utils/format";
+import { formatDateTime } from "../utils/format";
 
 const RESPONSE_ACTIONS = [
-  { label: "Accept", status: "accepted", className: "primary-button" },
-  { label: "Decline", status: "declined", className: "danger-button" },
-  { label: "On the way", status: "on_the_way", className: "secondary-button" },
-  { label: "Completed", status: "completed", className: "secondary-button" },
+  { label: "Accept", status: "accepted", className: "btn-primary" },
+  { label: "Decline", status: "declined", className: "btn-danger" },
+  { label: "On the Way", status: "on_the_way", className: "btn-outline" },
+  { label: "Completed", status: "completed", className: "btn-outline" },
 ];
 
 export function VolunteerRescueDetailPage() {
@@ -77,43 +77,62 @@ export function VolunteerRescueDetailPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+    <div className="page-shell page-active">
+      <div className="page-header">
         <div>
-          <p className="page-eyebrow">Volunteer View</p>
-          <h1 className="mt-2 text-3xl font-semibold text-slate-950">Assigned rescue #{rescue.id}</h1>
-          <p className="mt-2 max-w-3xl text-sm text-slate-600">
+          <div className="page-kicker">Volunteer View</div>
+          <h1 className="page-title">Assigned rescue #{rescue.id}</h1>
+          <p className="page-description">
             Review the rescue details, update your response state, and keep the coordinator informed through chat.
           </p>
         </div>
-        <div className="flex gap-3">
-          <Link className="secondary-button" to="/my-rescues">Back to my rescues</Link>
-          <Link className="secondary-button" to={`/chat?rescueId=${rescue.id}`}>Open chat</Link>
+        <div className="page-toolbar">
+          <Link className="btn-outline" to="/my-rescues">Back to My Rescues</Link>
+          <Link className="btn-outline" to={`/chat?rescueId=${rescue.id}`}>Open Chat</Link>
         </div>
       </div>
 
       <ErrorAlert message={error} />
 
-      <div className="grid gap-6 xl:grid-cols-[0.95fr,1.05fr]">
-        <SectionCard description="The rescue details and dispatch context visible to the assigned volunteer." title="Rescue summary">
-          <div className="space-y-4 text-sm text-slate-600">
-            <div className="rounded-3xl border border-slate-200 bg-slate-50/70 p-4">
+      <div className="grid gap-6 xl:grid-cols-2">
+        <SectionCard description="The rescue details and dispatch context visible to the assigned volunteer." title="Rescue summary" titleTag="field brief">
+          <div className="space-y-4 text-sm text-[var(--text2)]">
+            <div className="selection-card">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <div className="text-lg font-semibold text-slate-950">{rescue.location}</div>
-                  <div className="mt-1">{rescue.animal_type || "Animal type not specified"} • urgency {rescue.urgency || "n/a"}</div>
+                  <div className="text-lg font-semibold text-[var(--text)]">{rescue.location}</div>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <StatusBadge status={rescue.current_response_status || rescue.rescue_status} />
+                    <UrgencyChip value={rescue.urgency || "N/A"} />
+                  </div>
                 </div>
-                <StatusBadge status={rescue.current_response_status || rescue.rescue_status} />
               </div>
-              <div className="mt-4">Required skills: {formatSkills(rescue.required_skills)}</div>
-              <div className="mt-2">Notes: {rescue.notes || "No notes added."}</div>
-              <div className="mt-2">Coordinator message: {rescue.dispatch_message || "No dispatch message saved."}</div>
-              <div className="mt-2">Assigned: {formatDateTime(rescue.assigned_at)}</div>
-              <div className="mt-2">Last update: {formatDateTime(rescue.last_update_at)}</div>
+              <div className="mt-3 muted-copy">{rescue.animal_type || "Animal type not specified"}</div>
+              <div className="mt-3">
+                <SkillTags skills={rescue.required_skills} />
+              </div>
+              <div className="mt-4 info-card">
+                <div className="info-row">
+                  <span className="info-label">Notes</span>
+                  <span className="info-value">{rescue.notes || "No notes added."}</span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">Coordinator message</span>
+                  <span className="info-value">{rescue.dispatch_message || "No dispatch message saved."}</span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">Assigned</span>
+                  <span className="info-value">{formatDateTime(rescue.assigned_at)}</span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">Last update</span>
+                  <span className="info-value">{formatDateTime(rescue.last_update_at)}</span>
+                </div>
+              </div>
             </div>
 
             <div className="space-y-3">
-              <div className="text-sm font-medium text-slate-800">Update my rescue status</div>
+              <div className="mono-copy">Update my rescue status</div>
               <div className="flex flex-wrap gap-3">
                 {RESPONSE_ACTIONS.map((action) => (
                   <button
@@ -131,7 +150,7 @@ export function VolunteerRescueDetailPage() {
           </div>
         </SectionCard>
 
-        <SectionCard description="Rescue-linked chat is available while the assignment remains active." title="Chat">
+        <SectionCard description="Rescue-linked chat is available while the assignment remains active." title="Chat" titleTag="live channel">
           <ChatPanel
             rescueRequestId={rescue.id}
             rescueStatus={rescue.rescue_status}
